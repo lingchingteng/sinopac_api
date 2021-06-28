@@ -12,8 +12,14 @@ def daterange(start_date, end_date):
 
 if __name__ == "__main__":
     sj = SJ_module()
-    for stock_symbol in sj.get_list_stock_symbol():
-        tmp = datetime.today() - timedelta(hours=14, minutes=30)
-        end_date = datetime(tmp.year, tmp.month, tmp.day)
-        for d in daterange(start_date=datetime(2018, 12, 7), end_date=end_date):
-            sj.save_tick_to_csv(stock_symbol.code, d.strftime("%Y-%m-%d"))
+
+    list_stock_code = [s.code for s in sj.get_list_stock_symbol()]
+
+    start_date = datetime(2018, 12, 7)
+    tmp = datetime.today() - timedelta(hours=14, minutes=35) + timedelta(days=1)
+    end_date = datetime(tmp.year, tmp.month, tmp.day)
+    list_daterange = [d.strftime("%Y-%m-%d") for d in daterange(start_date, end_date)]
+
+    for stock_code in list_stock_code:
+        for d in list_daterange:
+            sj.save_tick_to_csv(stock_code, d)

@@ -53,19 +53,25 @@ class SJ_module:
         )
 
     def save_tick_to_csv(self, stock, date):
-        print(f"Saving tick for {stock} at {date}")
+
+        tick_folder = Path(f"data/ticks/{stock}")
+        tick_folder.mkdir(parents=True, exist_ok=True)
+
+        csv_filename = f"{stock}_{date}.csv"
+
+        if (tick_folder / csv_filename).exists():
+            print((tick_folder / csv_filename), "exist!")
+            return
+
         ticks = self.get_ticks(stock, date)
         df = pd.DataFrame({**ticks})
+
         if len(df) == 0:
             print(f"{stock} at {date} have no tick data.")
             return
 
         df.ts = pd.to_datetime(df.ts)
 
-        tick_folder = Path(f"data/ticks/{stock}")
-        tick_folder.mkdir(parents=True, exist_ok=True)
-
-        csv_filename = f"{stock}_{date}.csv"
         cols = [
             "ts",
             "close",
@@ -75,12 +81,14 @@ class SJ_module:
             "bid_price",
             "bid_volume",
         ]
+
+        print(f"Saving tick for {stock} at {date}")
         df.to_csv(tick_folder / csv_filename, index=False, columns=cols)
 
 
 if __name__ == "__main__":
-    list_stock = []
-    list_date = []
+    list_stock = ["1101B"]
+    list_date = ["2021-06-24"]
 
     sj_module = SJ_module()
 
