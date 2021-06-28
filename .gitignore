@@ -1,0 +1,8 @@
+venv/
+logs/
+.ipynb_checkpoints/
+shioaji.log
+Sinopac.pfx
+.env
+data/
+__pycache__/
