@@ -5,6 +5,8 @@ import pandas as pd
 import shioaji as sj
 from dotenv import load_dotenv
 
+from category_mapping import category_mapping as cm
+
 
 class SJ_module:
     def __init__(self):
@@ -33,24 +35,20 @@ class SJ_module:
             contract=self.api.Contracts.Stocks[stock_symbol], date=date
         )
 
-    def get_list_stock_symbol(self):
-        return (
-            list(
-                filter(
-                    lambda x: x.category != "00", list(self.api.Contracts.Stocks.TSE)
-                )
-            )
-            + list(
-                filter(
-                    lambda x: x.category != "00", list(self.api.Contracts.Stocks.OTC)
-                )
-            )
-            + list(
-                filter(
-                    lambda x: x.category != "00", list(self.api.Contracts.Stocks.OES)
-                )
-            )
+    def get_kbars(self, stock_symbol, date):
+        return self.api.kbars(
+            contract=self.api.Contracts.Stocks[stock_symbol], start=date, end=date,
         )
+
+    def get_list_stock(self):
+        ret = []
+        for m in (
+            self.api.Contracts.Stocks.TSE,
+            self.api.Contracts.Stocks.OTC,
+            self.api.Contracts.Stocks.OES,
+        ):
+            ret.extend([s for s in m if s.category in cm.keys()])
+        return ret
 
     def save_tick_to_csv(self, stock, date):
 
@@ -84,6 +82,31 @@ class SJ_module:
 
         print(f"Saving tick for {stock} at {date}")
         df.to_csv(tick_folder / csv_filename, index=False, columns=cols)
+
+    def save_kbar_to_csv(self, stock, date):
+        kbar_folder = Path(f"data/kbars/{stock}")
+        kbar_folder.mkdir(parents=True, exist_ok=True)
+
+        csv_filename = f"{stock}_{date}.csv"
+
+        if (kbar_folder / csv_filename).exists():
+            print((kbar_folder / csv_filename), "exist!")
+            return
+
+        kbars = self.get_kbars(stock, date)
+
+        df = pd.DataFrame({**kbars})
+
+        if len(df) == 0:
+            print(f"{stock} at {date} have no kbar data.")
+            return
+
+        df.ts = pd.to_datetime(df.ts)
+
+        cols = ["ts", "Open", "Close", "High", "Low", "Volume"]
+
+        print(f"Saving kbar for {stock} at {date}")
+        df.to_csv(kbar_folder / csv_filename, index=False, columns=cols)
 
 
 if __name__ == "__main__":

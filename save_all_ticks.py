@@ -1,11 +1,13 @@
+import glob
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from main import SJ_module
 
 
 def daterange(start_date, end_date):
     cur_date = start_date
-    while cur_date != end_date:
+    while cur_date <= end_date:
         yield cur_date
         cur_date += timedelta(days=1)
 
@@ -13,13 +15,57 @@ def daterange(start_date, end_date):
 if __name__ == "__main__":
     sj = SJ_module()
 
-    list_stock_code = [s.code for s in sj.get_list_stock_symbol()]
+    list_stock = sorted(sj.get_list_stock(), key=lambda x: x.code)
+    for stock in list_stock:
+        glob_files = glob.glob(str(Path("data") / "ticks" / f"{stock.code}" / "*.csv"))
+        if len(glob_files) > 0:
+            latest_file = sorted(glob_files, reverse=True,)[0]
+            latest_date = datetime.strptime(
+                Path(latest_file).stem.split("_")[-1], "%Y-%m-%d"
+            ) + timedelta(days=1)
+        else:
+            latest_date = datetime(2018, 12, 7)
 
-    start_date = datetime(2018, 12, 7)
-    tmp = datetime.today() - timedelta(hours=14, minutes=35) + timedelta(days=1)
-    end_date = datetime(tmp.year, tmp.month, tmp.day)
-    list_daterange = [d.strftime("%Y-%m-%d") for d in daterange(start_date, end_date)]
+        start_date = max(latest_date, datetime(2018, 12, 7))
 
-    for stock_code in list_stock_code:
+        update_date = datetime.strptime(stock.update_date, "%Y/%m/%d")
+        today = datetime.today() - timedelta(hours=14, minutes=35)
+
+        end_date = min(update_date, datetime(today.year, today.month, today.day))
+        list_daterange = [
+            d.strftime("%Y-%m-%d") for d in daterange(start_date, end_date)
+        ]
+        if len(list_daterange) > 0:
+            print(f"save {stock.code} from {list_daterange[0]} ~ {list_daterange[-1]}")
+        else:
+            print(f"{stock.code} is up-to-date")
+
         for d in list_daterange:
-            sj.save_tick_to_csv(stock_code, d)
+            sj.save_tick_to_csv(stock.code, d)
+
+    for stock in list_stock:
+        glob_files = glob.glob(str(Path("data") / "kbars" / f"{stock.code}" / "*.csv"))
+        if len(glob_files) > 0:
+            latest_file = sorted(glob_files, reverse=True,)[0]
+            latest_date = datetime.strptime(
+                Path(latest_file).stem.split("_")[-1], "%Y-%m-%d"
+            ) + timedelta(days=1)
+        else:
+            latest_date = datetime(2018, 12, 7)
+
+        start_date = max(latest_date, datetime(2018, 12, 7))
+
+        update_date = datetime.strptime(stock.update_date, "%Y/%m/%d")
+        today = datetime.today() - timedelta(hours=14, minutes=35)
+
+        end_date = min(update_date, datetime(today.year, today.month, today.day))
+        list_daterange = [
+            d.strftime("%Y-%m-%d") for d in daterange(start_date, end_date)
+        ]
+        if len(list_daterange) > 0:
+            print(f"save {stock.code} from {list_daterange[0]} ~ {list_daterange[-1]}")
+        else:
+            print(f"{stock.code} is up-to-date")
+
+        for d in list_daterange:
+            sj.save_kbar_to_csv(stock.code, d)
