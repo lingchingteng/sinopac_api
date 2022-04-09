@@ -97,5 +97,5 @@ def main(start_date=datetime.today(), end_date=datetime.today()):
 
 if __name__ == "__main__":
     # start_date, end_date
-    # main(datetime(2021, 7, 7), datetime(2021, 7, 7))
+    main(datetime(2021, 6, 1), datetime(2021, 7, 24))
     main()
